@@ -16,6 +16,7 @@ add_executable (AudioCtrl "AudioCtrl.cpp" "AudioCtrl.h")
 
 target_link_libraries(AudioCtrl PRIVATE
 	"Version.lib"
+	"OneCore.lib"
 )
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
