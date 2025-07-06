@@ -12,12 +12,19 @@ endif()
 project ("AudioCtrl")
 
 # Add source to this project's executable.
-add_executable (AudioCtrl "AudioCtrl.cpp" "AudioCtrl.h")
+add_executable (AudioCtrl "AudioCtrl.cpp" "AudioCtrl.hpp" "Audio.cpp" "Com.cpp")
 
-target_link_libraries(AudioCtrl PRIVATE
-	"Version.lib"
-	"OneCore.lib"
-)
+if (WIN32)
+	target_link_libraries(AudioCtrl PRIVATE
+		"Version.lib"
+		"OneCore.lib"
+	)
+endif (WIN32)
+
+if (UNIX)
+	target_link_libraries(AudioCtrl PRIVATE
+	)
+endif (UNIX)
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET AudioCtrl PROPERTY CXX_STANDARD 20)

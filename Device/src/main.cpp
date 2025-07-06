@@ -23,13 +23,28 @@ void setup()
 
 void loop()
 {
+    // slider value is 10 bit
+    // split into high and low
+    // 0ccc dddd 10dd dddd
+    // c = slider index
+    // d = data
+    while (!Serial.available())
+        ;
+
+    while (Serial.available())
+        Serial.read();
+
     for (uint8_t i = 0; i < ARRAY_SIZE(sliders); i++)
     {
-        if (i != 0)
-            Serial.print("\t");
-        Serial.print(getSliderValue(i));
+        char buffer[2];
+        memset(buffer, 0, ARRAY_SIZE(buffer));
+
+        int value = getSliderValue(i);
+        buffer[0] = ((i & 0b111) << 4) | ((value >> 6) & 0b1111);
+        buffer[1] = 0b10000000 | (value & 0b111111);
+
+        Serial.write(buffer, 2);
     }
-    Serial.println();
 }
 
 // X X OUT 5V
