@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
 	com.send(reinterpret_cast<char*>(tempBuf.data()), tempBuf.size());
 
-	while (true) {
+	while (false) {
 		com.waitForData();
 
 		while (true) {
