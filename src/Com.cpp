@@ -41,11 +41,11 @@ Com::~Com() {
 	// TODO: handle errors
 }
 
-void Com::send(const char* buffer, size_t bufferLen) {
+void Com::send(const std::vector<uint8_t>& buffer) {
 	DWORD bytesWritten = 0;
-	BOOL success = WriteFile(this->com, buffer, bufferLen, &bytesWritten, nullptr);
+	BOOL success = WriteFile(this->com, buffer.data(), buffer.size(), &bytesWritten, nullptr);
 	// TODO: handle errors
-	if (bytesWritten != bufferLen) {
+	if (bytesWritten != buffer.size()) {
 		// TODO
 	}
 }

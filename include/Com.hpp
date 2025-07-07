@@ -12,7 +12,7 @@ public:
 	Com(const std::string& port, DWORD baud = CBR_9600);
 	~Com();
 
-	void send(const char* buffer, size_t bufferLen);
+	void send(const std::vector<uint8_t>& buffer);
 	void receive(std::vector<uint8_t>& buffer);
 
 	void waitForData();

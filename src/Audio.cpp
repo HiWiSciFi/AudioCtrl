@@ -5,16 +5,13 @@
 #undef WIN32_LEAN_AND_MEAN
 
 #include <Psapi.h>
+#include <iostream>
 
 static constexpr CLSID CLSID_MMDEVICE_ENUMERATOR  = __uuidof(MMDeviceEnumerator);
 static constexpr IID IID_IMMDEVICE_ENUMERATOR     = __uuidof(IMMDeviceEnumerator);
 static constexpr IID IID_IAUDIO_SESSION_MANAGER_2 = __uuidof(IAudioSessionManager2);
 static constexpr IID IID_IAUDIO_ENDPOINT_VOLUME   = __uuidof(IAudioEndpointVolume);
 static constexpr IID IID_IMMNOTIFICATION_CLIENT   = __uuidof(IMMNotificationClient);
-
-static void ReleaseIUnknown(IUnknown* obj) {
-	obj->Release();
-}
 
 void Audio::init() {
 	HRESULT result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -26,16 +23,11 @@ Session::Session() {
 	this->sessionControl2 = nullptr;
 }
 
-#include <iostream>
+Session::Session(IUnknownW<IAudioSessionControl> sessionControl) {
+	this->sessionControl = sessionControl;
 
-Session::Session(IAudioSessionControl* sessionControl) {
-	this->sessionControl = std::shared_ptr<IAudioSessionControl>(sessionControl, ReleaseIUnknown);
-
-	IAudioSessionControl2* pSessionControl2 = nullptr;
-	HRESULT result = this->sessionControl->QueryInterface<IAudioSessionControl2>(&pSessionControl2);
+	HRESULT result = this->sessionControl->QueryInterface(&this->sessionControl2);
 	// TODO: handle result
-
-	this->sessionControl2 = std::shared_ptr<IAudioSessionControl2>(pSessionControl2, ReleaseIUnknown);
 
 	DWORD procID = 0;
 	result = this->sessionControl2->GetProcessId(&procID);
@@ -48,10 +40,8 @@ Session::Session(IAudioSessionControl* sessionControl) {
 		std::wcout << L"Path: " << path << std::endl;
 	}
 
-	ISimpleAudioVolume* audioVolume = nullptr;
-	result = this->sessionControl2->QueryInterface<ISimpleAudioVolume>(&audioVolume);
+	result = this->sessionControl2->QueryInterface(&this->audioVolume);
 	// TODO: handle result
-	this->audioVolume = std::shared_ptr<ISimpleAudioVolume>(audioVolume);
 }
 
 void Session::setVolume(float volume) {
@@ -63,19 +53,16 @@ SessionEnumerator::SessionEnumerator() {
 	this->sessionEnumerator = nullptr;
 }
 
-SessionEnumerator::SessionEnumerator(IAudioSessionManager2* sessionManager) {
-	this->sessionManager = std::shared_ptr<IAudioSessionManager2>(sessionManager, ReleaseIUnknown);
+SessionEnumerator::SessionEnumerator(IUnknownW<IAudioSessionManager2> sessionManager) {
+	this->sessionManager = sessionManager;
 
-	IAudioSessionEnumerator* pSessionEnumerator = nullptr;
-	HRESULT result = this->sessionManager->GetSessionEnumerator(&pSessionEnumerator);
+	HRESULT result = this->sessionManager->GetSessionEnumerator(&this->sessionEnumerator);
 	// TODO: handle result
-
-	this->sessionEnumerator = std::shared_ptr<IAudioSessionEnumerator>(pSessionEnumerator, ReleaseIUnknown);
 
 	this->sessions = std::vector<Session>(this->getSessionCount());
 
 	for (int i = 0; i < this->sessions.size(); i++) {
-		IAudioSessionControl* sessionControl = nullptr;
+		IUnknownW<IAudioSessionControl> sessionControl;
 		result = this->sessionEnumerator->GetSession(i, &sessionControl);
 		// TODO: handle result
 		this->sessions[i] = std::move(Session(sessionControl));
@@ -94,17 +81,15 @@ Device::Device() {
 	this->device = nullptr;
 }
 
-Device::Device(IMMDevice* device) {
-	this->device = std::shared_ptr<IMMDevice>(device, ReleaseIUnknown);
+Device::Device(IUnknownW<IMMDevice> device) {
+	this->device = device;
 
-	IAudioSessionManager2* sessionManager = nullptr;
-	HRESULT result = this->device->Activate(IID_IAUDIO_SESSION_MANAGER_2, CLSCTX_ALL, nullptr, (void**)&sessionManager);
+	IUnknownW<IAudioSessionManager2> sessionManager;
+	HRESULT result = this->device->Activate(IID_IAUDIO_SESSION_MANAGER_2, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&sessionManager));
 	// TODO: handle result
 
-	IAudioEndpointVolume* pEndpointVolume = nullptr;
-	result = this->device->Activate(IID_IAUDIO_ENDPOINT_VOLUME, CLSCTX_ALL, nullptr, (void**)&pEndpointVolume);
+	result = this->device->Activate(IID_IAUDIO_ENDPOINT_VOLUME, CLSCTX_ALL, nullptr, reinterpret_cast<void**>(&this->endpointVolume));
 	// TODO: handle result
-	this->endpointVolume = std::shared_ptr<IAudioEndpointVolume>(pEndpointVolume, ReleaseIUnknown);
 
 	this->sessionEnumerator = std::move(SessionEnumerator(sessionManager));
 }
@@ -118,12 +103,12 @@ DeviceCollection::DeviceCollection() {
 	this->collection = nullptr;
 }
 
-DeviceCollection::DeviceCollection(IMMDeviceCollection* collection) {
-	this->collection = std::shared_ptr<IMMDeviceCollection>(collection, ReleaseIUnknown);
+DeviceCollection::DeviceCollection(IUnknownW<IMMDeviceCollection> collection) {
+	this->collection = collection;
 	this->devices = std::vector<Device>(this->getDeviceCount());
 
 	for (UINT i = 0; i < this->devices.size(); i++) {
-		IMMDevice* pDevice = nullptr;
+		IUnknownW<IMMDevice> pDevice;
 		HRESULT result = this->collection->Item(i, &pDevice);
 		// TODO: handle result
 		this->devices[i] = std::move(Device(pDevice));
@@ -174,7 +159,7 @@ HRESULT DeviceEventNotifier::OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD d
 }
 
 HRESULT DeviceEventNotifier::OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) {
-	this->enumerator->reloadDevices();
+	//this->enumerator->reloadDevices();
 	return S_OK;
 }
 
@@ -193,40 +178,39 @@ ULONG DeviceEventNotifier::Release() {
 HRESULT DeviceEventNotifier::QueryInterface(REFIID riid, void** ppvInterface) {
 	if (IID_IUnknown == riid) {
 		AddRef();
-		*ppvInterface = (IUnknown*)this;
+		*ppvInterface = static_cast<IUnknown*>(this);
 	} else if (riid == IID_IMMNOTIFICATION_CLIENT) {
 		AddRef();
-		*ppvInterface = (IMMNotificationClient*)this;
+		*ppvInterface = static_cast<IMMNotificationClient*>(this);
 	} else {
-		*ppvInterface = NULL;
+		*ppvInterface = nullptr;
 		return E_NOINTERFACE;
 	}
 	return S_OK;
 }
 
 DeviceEnumerator::DeviceEnumerator() {
-	IMMDeviceEnumerator* pEnumerator = nullptr;
 	HRESULT result = CoCreateInstance(
 		CLSID_MMDEVICE_ENUMERATOR, nullptr,
 		CLSCTX_ALL, IID_IMMDEVICE_ENUMERATOR,
-		(void**)&(pEnumerator)
+		reinterpret_cast<void**>(&this->enumerator)
 	);
 	// TODO: handle result
 
 	this->eventNotifier = DeviceEventNotifier(this);
-	this->enumerator = std::shared_ptr<IMMDeviceEnumerator>(pEnumerator, ReleaseIUnknown);
-
-	this->enumerator->RegisterEndpointNotificationCallback(&this->eventNotifier);
+	result = this->enumerator->RegisterEndpointNotificationCallback(&this->eventNotifier);
+	// TODO: handle result
 
 	this->reloadDevices();
 }
 
 DeviceEnumerator::~DeviceEnumerator() {
-	this->enumerator->UnregisterEndpointNotificationCallback(&this->eventNotifier);
+	HRESULT result = this->enumerator->UnregisterEndpointNotificationCallback(&this->eventNotifier);
+	// TODO: handle result
 }
 
 void DeviceEnumerator::reloadDevices() {
-	IMMDeviceCollection* pDevices = nullptr;
+	IUnknownW<IMMDeviceCollection> pDevices;
 	HRESULT result = this->enumerator->EnumAudioEndpoints(
 		eRender,
 		DEVICE_STATE_ACTIVE,

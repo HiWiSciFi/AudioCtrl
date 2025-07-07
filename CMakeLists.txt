@@ -12,7 +12,7 @@ endif()
 project ("AudioCtrl")
 
 # Add source to this project's executable.
-add_executable (AudioCtrl "src/AudioCtrl.cpp" "src/Audio.cpp" "src/Com.cpp")
+add_executable (AudioCtrl WIN32 "src/AudioCtrl.cpp" "src/Audio.cpp" "src/Com.cpp")
 
 target_include_directories(AudioCtrl PRIVATE
 	"${CMAKE_CURRENT_SOURCE_DIR}/include"

@@ -7,23 +7,28 @@
 #include <chrono>
 #include <thread>
 
-constexpr auto INITIAL_PORTS_LEN = 16;
-
+constexpr size_t INITIAL_PORTS_LEN = 16;
 constexpr ULONG COMM_PORT_ARDUINO = 5;
 
-// Map App Path to slider
-// Adjust App volume
+// Read config file
+// Construct Audio Tree with slider assignments
+// Add capability to set all audio recursively via DeviceEnumerator
+// Lock DeviceEnumerator to not interfere with notifier? Maybe just fix EX handling...
 
-int main(int argc, char** argv) {
+// Map Output Device to slider
+// Map EXE Path to slider
+// Map EXE Name to slider
+
+int main() {
 	Audio::init();
 	DeviceEnumerator deviceEnumerator = DeviceEnumerator();
 
-	Com com = Com("COM5");
+	Com com = Com("\\\\.\\COM5");
 
 	std::vector<uint8_t> buffer = std::vector<uint8_t>(2);
 	std::vector<uint8_t> tempBuf = std::vector<uint8_t>(1);
 
-	com.send(reinterpret_cast<char*>(tempBuf.data()), tempBuf.size());
+	com.send(tempBuf);
 
 	while (true) {
 		com.waitForData();
@@ -48,14 +53,20 @@ int main(int argc, char** argv) {
 
 			if (slider == 0) std::cout << std::endl;
 			else std::cout << '\t';
-			if (slider == 5) com.send(reinterpret_cast<char*>(tempBuf.data()), tempBuf.size());
+			if (slider == 5) com.send(tempBuf);
 			std::cout << "Slider " << (int)slider << ": " << value;
 
 			if (slider == 0) {
 				deviceEnumerator.setMainVolume(value / 1023.0f);
 			}
 
-			if (slider == 5) std::this_thread::sleep_for(std::chrono::milliseconds(500));
+			//if (slider == 5) std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		}
 	}
 }
+
+#ifdef _WIN32
+int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ PWSTR pCmdLine, _In_ int nCmdShow) {
+	return main();
+}
+#endif
