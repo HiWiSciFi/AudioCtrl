@@ -1,8 +1,10 @@
-#include "Audio.hpp"
+#include <Audio.hpp>
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #undef WIN32_LEAN_AND_MEAN
+
+#include <Psapi.h>
 
 static constexpr CLSID CLSID_MMDEVICE_ENUMERATOR  = __uuidof(MMDeviceEnumerator);
 static constexpr IID IID_IMMDEVICE_ENUMERATOR     = __uuidof(IMMDeviceEnumerator);
@@ -19,19 +21,12 @@ void Audio::init() {
 	// TODO: handle result
 }
 
-VolumeControl::VolumeControl() {
-	this->audioVolume = nullptr;
-}
-
-VolumeControl::VolumeControl(ISimpleAudioVolume* audioVolume) {
-	this->audioVolume = std::shared_ptr<ISimpleAudioVolume>(audioVolume, ReleaseIUnknown);
-	//this->audioVolume->SetMasterVolume(1.0f, nullptr); // TODO: remove
-}
-
 Session::Session() {
 	this->sessionControl = nullptr;
 	this->sessionControl2 = nullptr;
 }
+
+#include <iostream>
 
 Session::Session(IAudioSessionControl* sessionControl) {
 	this->sessionControl = std::shared_ptr<IAudioSessionControl>(sessionControl, ReleaseIUnknown);
@@ -42,11 +37,25 @@ Session::Session(IAudioSessionControl* sessionControl) {
 
 	this->sessionControl2 = std::shared_ptr<IAudioSessionControl2>(pSessionControl2, ReleaseIUnknown);
 
+	DWORD procID = 0;
+	result = this->sessionControl2->GetProcessId(&procID);
+	// TODO: handle result
+
+	HANDLE procHandle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, procID);
+	WCHAR path[MAX_PATH];
+	if (GetModuleFileNameExW(procHandle, nullptr, path, MAX_PATH) != 0) {
+		CloseHandle(procHandle);
+		std::wcout << L"Path: " << path << std::endl;
+	}
+
 	ISimpleAudioVolume* audioVolume = nullptr;
 	result = this->sessionControl2->QueryInterface<ISimpleAudioVolume>(&audioVolume);
 	// TODO: handle result
+	this->audioVolume = std::shared_ptr<ISimpleAudioVolume>(audioVolume);
+}
 
-	this->volumeControl = VolumeControl(audioVolume);
+void Session::setVolume(float volume) {
+	this->audioVolume->SetMasterVolume(volume, nullptr);
 }
 
 SessionEnumerator::SessionEnumerator() {
@@ -145,22 +154,27 @@ DeviceEventNotifier::DeviceEventNotifier(DeviceEnumerator* enumerator) {
 }
 
 HRESULT DeviceEventNotifier::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDefaultDeviceId) {
+	this->enumerator->reloadDevices();
 	return S_OK;
 }
 
 HRESULT DeviceEventNotifier::OnDeviceAdded(LPCWSTR pwstrDeviceId) {
+	this->enumerator->reloadDevices();
 	return S_OK;
 }
 
 HRESULT DeviceEventNotifier::OnDeviceRemoved(LPCWSTR owstrDeviceId) {
+	this->enumerator->reloadDevices();
 	return S_OK;
 }
 
 HRESULT DeviceEventNotifier::OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) {
+	this->enumerator->reloadDevices();
 	return S_OK;
 }
 
 HRESULT DeviceEventNotifier::OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) {
+	this->enumerator->reloadDevices();
 	return S_OK;
 }
 

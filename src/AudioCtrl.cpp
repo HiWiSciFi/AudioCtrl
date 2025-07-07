@@ -1,13 +1,18 @@
-﻿#include "AudioCtrl.hpp"
+﻿#include <AudioCtrl.hpp>
 
-#include "Audio.hpp"
-#include "Com.hpp"
+#include <Audio.hpp>
+#include <Com.hpp>
 
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 constexpr auto INITIAL_PORTS_LEN = 16;
 
 constexpr ULONG COMM_PORT_ARDUINO = 5;
+
+// Map App Path to slider
+// Adjust App volume
 
 int main(int argc, char** argv) {
 	Audio::init();
@@ -20,7 +25,7 @@ int main(int argc, char** argv) {
 
 	com.send(reinterpret_cast<char*>(tempBuf.data()), tempBuf.size());
 
-	while (false) {
+	while (true) {
 		com.waitForData();
 
 		while (true) {
@@ -49,6 +54,8 @@ int main(int argc, char** argv) {
 			if (slider == 0) {
 				deviceEnumerator.setMainVolume(value / 1023.0f);
 			}
+
+			if (slider == 5) std::this_thread::sleep_for(std::chrono::milliseconds(500));
 		}
 	}
 }

@@ -32,11 +32,6 @@ Com::Com(const std::string& port, DWORD baud) {
 	success = GetCommState(this->com, &this->dcb);
 	// TODO: handle errors
 
-	//OVERLAPPED comReader = {
-	//	.hEvent = CreateEventA(nullptr, TRUE, FALSE, nullptr)
-	//};
-	//// TODO: handle errors
-
 	success = SetCommMask(this->com, EV_RXCHAR);
 	// TODO: handle errors
 }

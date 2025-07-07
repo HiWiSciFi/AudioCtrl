@@ -12,24 +12,17 @@ public:
 	static void init();
 };
 
-class VolumeControl {
-public:
-	VolumeControl();
-	VolumeControl(ISimpleAudioVolume* audioVolume);
-
-protected:
-	std::shared_ptr<ISimpleAudioVolume> audioVolume;
-};
-
 class Session {
 public:
 	Session();
 	Session(IAudioSessionControl* sessionControl);
 
+	void setVolume(float volume);
+
 protected:
 	std::shared_ptr<IAudioSessionControl> sessionControl;
 	std::shared_ptr<IAudioSessionControl2> sessionControl2;
-	VolumeControl volumeControl;
+	std::shared_ptr<ISimpleAudioVolume> audioVolume;
 };
 
 class SessionEnumerator {
