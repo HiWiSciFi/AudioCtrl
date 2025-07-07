@@ -10,14 +10,14 @@
 constexpr size_t INITIAL_PORTS_LEN = 16;
 constexpr ULONG COMM_PORT_ARDUINO = 5;
 
-// Read config file
-// Construct Audio Tree with slider assignments
-// Add capability to set all audio recursively via DeviceEnumerator
-// Lock DeviceEnumerator to not interfere with notifier? Maybe just fix EX handling...
+// ( ) Read config file
+// ( ) Construct Audio Tree with slider assignments
+// ( ) Add capability to set all audio recursively via DeviceEnumerator
+// (X) Lock DeviceEnumerator to not interfere with notifier? Maybe just fix EX handling...
 
-// Map Output Device to slider
-// Map EXE Path to slider
-// Map EXE Name to slider
+// ( ) Map Output Device to slider
+// ( ) Map EXE Path to slider
+// ( ) Map EXE Name to slider
 
 int main() {
 	Audio::init();

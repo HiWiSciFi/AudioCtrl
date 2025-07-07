@@ -210,6 +210,7 @@ DeviceEnumerator::~DeviceEnumerator() {
 }
 
 void DeviceEnumerator::reloadDevices() {
+	this->access_mutex.lock();
 	IUnknownW<IMMDeviceCollection> pDevices;
 	HRESULT result = this->enumerator->EnumAudioEndpoints(
 		eRender,
@@ -218,8 +219,11 @@ void DeviceEnumerator::reloadDevices() {
 	);
 	// TODO: handle result
 	this->deviceCollection = std::move(DeviceCollection(pDevices));
+	this->access_mutex.unlock();
 }
 
 void DeviceEnumerator::setMainVolume(float volume) {
+	this->access_mutex.lock();
 	this->deviceCollection.setMainVolume(volume);
+	this->access_mutex.unlock();
 }
