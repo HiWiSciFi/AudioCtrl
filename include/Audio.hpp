@@ -2,9 +2,15 @@
 
 #include <IUnknownW.hpp>
 
-#include <audiopolicy.h>
-#include <endpointvolume.h>
-#include <mmdeviceapi.h>
+#ifdef _WIN32
+	#include <WinHeaderBegin.hpp>
+
+	#include <audiopolicy.h>
+	#include <endpointvolume.h>
+	#include <mmdeviceapi.h>
+
+	#include <WinHeaderEnd.hpp>
+#endif
 
 #include <vector>
 #include <memory>

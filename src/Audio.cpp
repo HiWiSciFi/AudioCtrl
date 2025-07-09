@@ -1,11 +1,14 @@
 #include <Audio.hpp>
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#undef WIN32_LEAN_AND_MEAN
+#include <WinHeaderBegin.hpp>
 
+#include <windows.h>
 #include <Psapi.h>
+
+#include <WinHeaderEnd.hpp>
+
 #include <iostream>
+#include <fmtlog/fmtlog.h>
 
 static constexpr CLSID CLSID_MMDEVICE_ENUMERATOR  = __uuidof(MMDeviceEnumerator);
 static constexpr IID IID_IMMDEVICE_ENUMERATOR     = __uuidof(IMMDeviceEnumerator);
@@ -15,6 +18,9 @@ static constexpr IID IID_IMMNOTIFICATION_CLIENT   = __uuidof(IMMNotificationClie
 
 void Audio::init() {
 	HRESULT result = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	if (FAILED(result)) {
+		loge("Failed to initialize COM");
+	}
 	// TODO: handle result
 }
 

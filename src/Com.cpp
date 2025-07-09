@@ -43,7 +43,7 @@ Com::~Com() {
 
 void Com::send(const std::vector<uint8_t>& buffer) {
 	DWORD bytesWritten = 0;
-	BOOL success = WriteFile(this->com, buffer.data(), buffer.size(), &bytesWritten, nullptr);
+	BOOL success = WriteFile(this->com, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesWritten, nullptr);
 	// TODO: handle errors
 	if (bytesWritten != buffer.size()) {
 		// TODO
@@ -55,7 +55,7 @@ void Com::receive(std::vector<uint8_t>& buffer) {
 
 	DWORD bytesRead = 0;
 	//do {
-		BOOL success = ReadFile(this->com, buffer.data(), buffer.size(), &bytesRead, nullptr);
+	BOOL success = ReadFile(this->com, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesRead, nullptr);
 		// TODO: handle errors
 
 		buffer.resize(bytesRead);

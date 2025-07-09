@@ -1,8 +1,12 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#undef WIN32_LEAN_AND_MEAN
+#ifdef _WIN32
+	#include <WinHeaderBegin.hpp>
+
+	#include <windows.h>
+
+	#include <WinHeaderEnd.hpp>
+#endif
 
 #include <string>
 #include <vector>

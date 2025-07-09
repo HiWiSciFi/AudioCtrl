@@ -11,12 +11,34 @@ endif()
 
 project ("AudioCtrl")
 
+# Add WIN32 after target
 # Add source to this project's executable.
-add_executable (AudioCtrl WIN32 "src/AudioCtrl.cpp" "src/Audio.cpp" "src/Com.cpp")
+add_executable (AudioCtrl WIN32)
+
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/dep")
+
+add_dependencies(AudioCtrl fmt::fmt-header-only)
+
+set(AudioCtrl_inc_dir "${CMAKE_CURRENT_SOURCE_DIR}/include")
+set(AudioCtrl_src_dir "${CMAKE_CURRENT_SOURCE_DIR}/src")
+
+target_sources(AudioCtrl PRIVATE
+	"${AudioCtrl_src_dir}/Audio.cpp"
+	"${AudioCtrl_src_dir}/AudioCtrl.cpp"
+	"${AudioCtrl_src_dir}/Com.cpp"
+	"${AudioCtrl_src_dir}/SystemTray.cpp"
+	"${AudioCtrl_src_dir}/WinUtil.cpp"
+)
 
 target_include_directories(AudioCtrl PRIVATE
-	"${CMAKE_CURRENT_SOURCE_DIR}/include"
+	"${AudioCtrl_inc_dir}"
 )
+
+target_link_libraries(AudioCtrl PRIVATE
+	fmt::fmt-header-only
+)
+
+add_compile_options("/utf-8")
 
 if (WIN32)
 	target_link_libraries(AudioCtrl PRIVATE
