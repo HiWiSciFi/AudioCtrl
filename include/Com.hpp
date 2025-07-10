@@ -13,7 +13,7 @@
 
 class Com {
 public:
-	Com(const std::string& port, DWORD baud = CBR_9600);
+	Com(const std::wstring& port, DWORD baud = CBR_9600);
 	~Com();
 
 	void send(const std::vector<uint8_t>& buffer);

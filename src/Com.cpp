@@ -1,6 +1,6 @@
 #include "Com.hpp"
 
-Com::Com(const std::string& port, DWORD baud) {
+Com::Com(const std::wstring& port, DWORD baud) {
 	this->com = CreateFile(
 		port.c_str(),
 		GENERIC_READ | GENERIC_WRITE,
